@@ -40,6 +40,8 @@ private slots:
 
     void on_btn_push_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     void loadComp();
     void createActions();

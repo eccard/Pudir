@@ -198,9 +198,14 @@ void MainWindow::on_btn_push_clicked()
     ui->plainTextEdit->appendPlainText(process.readAllStandardOutput());
     ui->plainTextEdit->appendPlainText(process.readAllStandardError());
 
-    qDebug() << adbPath+" shell rm -rf /sdcard/"+destinationDirec;
+    qDebug() << adbPath+" shell rm -r /sdcard/"+destinationDirec;
     qDebug() << adbPath+" shell shell mkdir -p /sdcard/"+destinationDirec+"/default";
     qDebug() << adbPath+" push \""+ sourcePath  +"\" /sdcard/"+destinationDirec+"/default";
     qDebug() << sstdout;
     qDebug() << sstderr;
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    ui->plainTextEdit->clear();
 }
