@@ -162,12 +162,17 @@ void MainWindow::on_btn_setsrcdir_clicked()
 {
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
+    if (!ui->lineEdit_src_dir->text().isEmpty())
+        dialog.setDirectory(ui->lineEdit_src_dir->text());
     QStringList fileNames;
     if (dialog.exec())
         fileNames = dialog.selectedFiles();
-    qDebug()<< fileNames;
-    settings->setValue("sourcePath",fileNames.at(0));
-    ui->lineEdit_src_dir->setText(fileNames.at(0));
+    if (!fileNames.isEmpty()){
+        qDebug()<< fileNames;
+        settings->setValue("sourcePath",fileNames.at(0));
+        ui->lineEdit_src_dir->setText(fileNames.at(0));
+    }
+
 
 }
 
