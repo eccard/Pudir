@@ -18,14 +18,14 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>30</y>
-      <width>301</width>
-      <height>445</height>
+      <y>34</y>
+      <width>331</width>
+      <height>441</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <layout class="QGridLayout" name="gridLayout">
+      <layout class="QGridLayout" name="gridLayout" columnminimumwidth="0,0,0">
        <item row="1" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
@@ -57,8 +57,8 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEdit_src_dir"/>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="lineEdit_dest_dir"/>
        </item>
        <item row="0" column="2">
         <widget class="QPushButton" name="btn_refresh">
@@ -67,8 +67,37 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
-        <widget class="QLineEdit" name="lineEdit_dest_dir"/>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEdit_src_dir"/>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="lineEdit_backup_dir"/>
+       </item>
+       <item row="2" column="2">
+        <widget class="QCheckBox" name="checkBox_backup">
+         <property name="mouseTracking">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string notr="true">Backup </string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Back.folder:</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -112,6 +141,16 @@
       </spacer>
      </item>
      <item>
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Log</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPlainTextEdit" name="plainTextEdit">
        <property name="font">
         <font>
@@ -124,7 +163,7 @@
         <bool>true</bool>
        </property>
        <property name="plainText">
-        <string>Log:</string>
+        <string/>
        </property>
        <property name="backgroundVisible">
         <bool>false</bool>

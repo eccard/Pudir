@@ -21,10 +21,12 @@ TEMPLATE = app
 
 SOURCES += sources/main.cpp\
            sources/mainwindow.cpp\
-           sources/aboutdialog.cpp
+           sources/aboutdialog.cpp \
+            sources/workerthread.cpp
 
 HEADERS  += headers/mainwindow.h \
             headers/aboutdialog.h \
+            headers/workerthread.h
 
 FORMS    += mainwindow.ui \
             aboutdialog.ui

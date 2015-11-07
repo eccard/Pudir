@@ -13,9 +13,10 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QStringListModel>
-#include <QProcess>
 #include <QPalette>
 #include "headers/aboutdialog.h"
+#include "headers/workerthread.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -24,6 +25,10 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     createMenus();
     settings = new QSettings("freesoft", "pudir");
+    mProcess = new QProcess();
+    mProcess->setProcessChannelMode(QProcess::MergedChannels);
+    connect(mProcess,SIGNAL(readyReadStandardOutput()),this,SLOT(readyReadStandardOutput()));
+//    connect(mProcess,SIGNAL(readyReadStandardError()),this,SLOT(readyReadStandardError()));
     loadComp();
 
 
@@ -48,6 +53,20 @@ void MainWindow::loadComp(){
         msgBox.setInformativeText("Please go to Option -> Set SDK");
         msgBox.exec();
     }
+    if(settings->value("backup").toBool()){
+        ui->label_4->setEnabled(true);
+        ui->checkBox_backup->setChecked(true);
+        ui->lineEdit_backup_dir->setEnabled(true);
+        ui->lineEdit_backup_dir->setText(settings->value("backup_dir").toString());
+    }else{
+        ui->label_4->setEnabled(false);
+        ui->lineEdit_backup_dir->setText(settings->value("backup_dir").toString());
+        ui->lineEdit_backup_dir->setEnabled(false);
+
+    }
+    ui->btn_push->setEnabled(false);
+
+
 }
 
 MainWindow::~MainWindow()
@@ -127,10 +146,13 @@ void MainWindow::on_btn_refresh_clicked()
 {
     QStringList result;
     QProcess process;
+
     process.start(adbPath+" devices");
     process.waitForFinished(-1);
+
     QString sstdout = process.readAllStandardOutput();
     QString sstderr = process.readAllStandardError();
+    ui->plainTextEdit->clear();
     ui->plainTextEdit->appendPlainText(sstdout);
     ui->plainTextEdit->appendPlainText(sstderr);
     qDebug() << "."+adbPath+" devices";
@@ -156,6 +178,8 @@ void MainWindow::on_btn_refresh_clicked()
      QStringListModel *typeModel = new QStringListModel(result, this);
 
     ui->comboBox->setModel(typeModel);
+
+
 }
 
 void MainWindow::on_btn_setsrcdir_clicked()
@@ -170,7 +194,7 @@ void MainWindow::on_btn_setsrcdir_clicked()
     if (!fileNames.isEmpty()){
         qDebug()<< fileNames;
         settings->setValue("sourcePath",fileNames.at(0));
-        ui->lineEdit_src_dir->setText(fileNames.at(0));
+       ui->lineEdit_src_dir->setText(fileNames.at(0));
     }
 
 
@@ -178,30 +202,39 @@ void MainWindow::on_btn_setsrcdir_clicked()
 
 void MainWindow::on_btn_push_clicked()
 {
+    startWorkInAThread();
+    return ;
     QString destinationDirec = ui->lineEdit_dest_dir->text();
     QString deviceid = ui->comboBox->currentText();
+    QString backupDir;
     settings->setValue("destDir",destinationDirec);
-
-
     QString sstdout,sstderr;
     QString sourcePath = settings->value("sourcePath").toString();
 
-    QProcess process;
-    process.start(adbPath+" -s "+deviceid +" shell rm -rf /sdcard/"+destinationDirec);
-    process.waitForFinished(-1);
     ui->plainTextEdit->clear();
-    ui->plainTextEdit->appendPlainText(process.readAllStandardOutput());
-    ui->plainTextEdit->appendPlainText(process.readAllStandardError());
+    if(ui->checkBox_backup->isChecked()){
+        if(!ui->lineEdit_backup_dir->text().isEmpty())
+            backupDir = ui->lineEdit_backup_dir->text();
+        else{
+            backupDir = destinationDirec+".backup";
+            ui->lineEdit_backup_dir->setText(backupDir);
+        }
+        settings->setValue("backup_dir",backupDir);
+        mProcess->start(adbPath+" -s "+deviceid +" shell rm -rv /sdcard/"+backupDir);
+        mProcess->waitForFinished(-1);
+        mProcess->start(adbPath+" -s "+deviceid +" shell mv -v /sdcard/"+destinationDirec +" /sdcard/"+backupDir);
+        mProcess->waitForFinished(-1);
+    }
 
-    process.start(adbPath+" -s "+deviceid +" shell mkdir -p /sdcard/"+destinationDirec+"/default");
-    process.waitForFinished(-1);
-    ui->plainTextEdit->appendPlainText(process.readAllStandardOutput());
-    ui->plainTextEdit->appendPlainText(process.readAllStandardError());
+//    QProcess process;
+    mProcess->start(adbPath+" -s "+deviceid +" shell rm -rf /sdcard/"+destinationDirec);
+    mProcess->waitForFinished(-1);
 
-    process.start(adbPath+" -s "+deviceid +" push \""+ sourcePath  +"\" /sdcard/"+destinationDirec+"/default");
-    process.waitForFinished(-1);
-    ui->plainTextEdit->appendPlainText(process.readAllStandardOutput());
-    ui->plainTextEdit->appendPlainText(process.readAllStandardError());
+    mProcess->start(adbPath+" -s "+deviceid +" shell mkdir -p /sdcard/"+destinationDirec+"/default");
+    mProcess->waitForFinished(-1);
+
+    mProcess->start(adbPath+" -s "+deviceid +" push \""+ sourcePath  +"\" /sdcard/"+destinationDirec+"/default");
+    mProcess->waitForFinished(-1);
 
     qDebug() << adbPath+" shell rm -r /sdcard/"+destinationDirec;
     qDebug() << adbPath+" shell shell mkdir -p /sdcard/"+destinationDirec+"/default";
@@ -213,4 +246,96 @@ void MainWindow::on_btn_push_clicked()
 void MainWindow::on_pushButton_clicked()
 {
     ui->plainTextEdit->clear();
+}
+
+void MainWindow::readyReadStandardOutput(){
+    ui->plainTextEdit->appendPlainText(mProcess->readAllStandardOutput());
+}
+
+void MainWindow::readyReadStandardError(){
+    ui->plainTextEdit->appendPlainText(mProcess->readAllStandardError());
+}
+
+
+
+void MainWindow::on_checkBox_backup_clicked()
+{
+    bool checked = ui->checkBox_backup->isChecked();
+    settings->setValue("backup",checked);
+    if (checked){
+        ui->label_4->setEnabled(true);
+        ui->lineEdit_backup_dir->setEnabled(true);
+        ui->lineEdit_backup_dir->setText(settings->value("backup_dir").toString());
+    }else{
+        ui->label_4->setEnabled(false);
+        ui->lineEdit_backup_dir->setEnabled(false);
+    }
+}
+
+/*
+class WorkerThread : public QThread
+{
+    Q_OBJECT
+public:
+    WorkerThread(QString &adbPath,QString &sourcePath,
+                 QString &deviceid,QString &destinationDirec,
+                 bool backup,QString &backupDir,QObject *parent):QThread(parent){
+        this->adbPath = adbPath;
+        this->sourcePath = sourcePath;
+        this->deviceid = deviceid;
+        this->destinationDirec = destinationDirec;
+        this->backup = backup;
+        this->backupDir = backupDir;
+    }
+private:
+    QString adbPath;
+    QString sourcePath;
+    QString deviceid;
+    QString destinationDirec;
+
+    bool backup;
+    QString backupDir;
+
+    void run() {
+
+        QString result="";
+//         expensive or blocking operation
+
+        emit resultReady(result);
+    }
+signals:
+    void resultReady(const QString &ss);
+};
+*/
+void MainWindow::startWorkInAThread()
+{
+    QString destinationDirec = ui->lineEdit_dest_dir->text();
+    QString deviceid = ui->comboBox->currentText();
+    QString backupDir;
+    settings->setValue("destDir",destinationDirec);
+
+    QString sourcePath = settings->value("sourcePath").toString();
+    ui->plainTextEdit->clear();
+
+    bool backup = ui->checkBox_backup->isChecked();
+    if(backup){
+        if(!ui->lineEdit_backup_dir->text().isEmpty())
+            backupDir = ui->lineEdit_backup_dir->text();
+        else{
+            backupDir = destinationDirec+".backup";
+            ui->lineEdit_backup_dir->setText(backupDir);
+        }
+        settings->setValue("backup_dir",backupDir);
+    }
+
+    WorkerThread *workerThread = new WorkerThread(adbPath,sourcePath,
+                                                  deviceid,destinationDirec,
+                                                  backup,backupDir);
+    connect(workerThread, SIGNAL(resultReady(QString)), this, SLOT(handleResults(QString)));
+    connect(workerThread, SIGNAL(finished()), workerThread, SLOT(deleteLater()));
+    workerThread->start();
+}
+void MainWindow::handleResults(QString result){
+    ui->plainTextEdit->appendPlainText(result);
+
 }

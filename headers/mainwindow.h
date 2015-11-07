@@ -11,6 +11,7 @@
 #include <QActionGroup>
 #include <QMenu>
 #include <QSettings>
+#include <QProcess>
 
 namespace Ui {
 class MainWindow;
@@ -41,18 +42,25 @@ private slots:
     void on_btn_push_clicked();
 
     void on_pushButton_clicked();
-
+public slots:
+    void handleResults(QString result);
 private:
     void loadComp();
     void createActions();
     void createMenus();
+    void startWorkInAThread();
 
+    QProcess *mProcess;
     QMenu *optionsMenu;
     QActionGroup *alignmentGroup;
     QAction  *setSdkAct;
     QAction  *aboutAct;
     QAction  *exitAct;
+private slots:
+    void readyReadStandardOutput();
+    void readyReadStandardError();
 
+    void on_checkBox_backup_clicked();
 };
 
 #endif // MAINWINDOW_H
