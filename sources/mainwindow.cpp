@@ -203,44 +203,6 @@ void MainWindow::on_btn_setsrcdir_clicked()
 void MainWindow::on_btn_push_clicked()
 {
     startWorkInAThread();
-    return ;
-    QString destinationDirec = ui->lineEdit_dest_dir->text();
-    QString deviceid = ui->comboBox->currentText();
-    QString backupDir;
-    settings->setValue("destDir",destinationDirec);
-    QString sstdout,sstderr;
-    QString sourcePath = settings->value("sourcePath").toString();
-
-    ui->plainTextEdit->clear();
-    if(ui->checkBox_backup->isChecked()){
-        if(!ui->lineEdit_backup_dir->text().isEmpty())
-            backupDir = ui->lineEdit_backup_dir->text();
-        else{
-            backupDir = destinationDirec+".backup";
-            ui->lineEdit_backup_dir->setText(backupDir);
-        }
-        settings->setValue("backup_dir",backupDir);
-        mProcess->start(adbPath+" -s "+deviceid +" shell rm -rv /sdcard/"+backupDir);
-        mProcess->waitForFinished(-1);
-        mProcess->start(adbPath+" -s "+deviceid +" shell mv -v /sdcard/"+destinationDirec +" /sdcard/"+backupDir);
-        mProcess->waitForFinished(-1);
-    }
-
-//    QProcess process;
-    mProcess->start(adbPath+" -s "+deviceid +" shell rm -rf /sdcard/"+destinationDirec);
-    mProcess->waitForFinished(-1);
-
-    mProcess->start(adbPath+" -s "+deviceid +" shell mkdir -p /sdcard/"+destinationDirec+"/default");
-    mProcess->waitForFinished(-1);
-
-    mProcess->start(adbPath+" -s "+deviceid +" push \""+ sourcePath  +"\" /sdcard/"+destinationDirec+"/default");
-    mProcess->waitForFinished(-1);
-
-    qDebug() << adbPath+" shell rm -r /sdcard/"+destinationDirec;
-    qDebug() << adbPath+" shell shell mkdir -p /sdcard/"+destinationDirec+"/default";
-    qDebug() << adbPath+" push \""+ sourcePath  +"\" /sdcard/"+destinationDirec+"/default";
-    qDebug() << sstdout;
-    qDebug() << sstderr;
 }
 
 void MainWindow::on_pushButton_clicked()
